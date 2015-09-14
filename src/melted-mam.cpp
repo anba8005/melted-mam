@@ -157,9 +157,18 @@ int main(int argc, char** argv) {
 		url = argv[3];
 	}
 	//
-	MeltedMAM server("melted-mam", 5250, url);
+	stringstream port;
+	port << "5250" << (id < 0 ? 0 : id);
+	MeltedMAM server("melted-mam", atoi(port.str().c_str()), url);
+	//
+	stringstream unit;
+	if (id < 0) {
+		unit << "UADD sdl";
+	} else {
+		unit << "UADD decklink:" << id;
+	}
 	server.start();
-	server.execute("UADD sdl");
+	server.execute((char*)unit.str().c_str());
 	server.wait_for_shutdown();
 	return 0;
 }
