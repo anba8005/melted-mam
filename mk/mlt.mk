@@ -13,11 +13,12 @@ CFLAGS += -I$(MLT_INSTALL_DIR)/include
 LDFLAGS += -L$(MLT_INSTALL_DIR)/lib
 
 $(MLT_ARTIFACT):
-	cd $(MLT_SRC_DIR) ; ./configure $(MLT_CONFIG_OPTS) ; make -j8 ; make install
+	cd $(MLT_SRC_DIR) ; ./configure $(MLT_CONFIG_OPTS) && make -j8 && make install
 
 clean-mlt:
 	cd $(MLT_SRC_DIR) ; make clean
 
-
+mlt:
+	cd $(MLT_SRC_DIR) ; make -j8 && make install
 
 
