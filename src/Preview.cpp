@@ -63,7 +63,6 @@ void Preview::init() {
 	consumer->set("deinterlace_method", "onefield");
 	consumer->set("target", url.c_str());
 	consumer->start();
-	fprintf(stderr,"%s\n",url.c_str());
 	//
 	deinterlacer = new Filter(profile, "deinterlace");
 	scaler = new Filter(profile,"swscale");

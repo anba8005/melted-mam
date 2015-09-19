@@ -10,11 +10,11 @@ MELTED_MAM_OBJ = tmp/melted-mam.o tmp/AVFilter.o tmp/Preview.o tmp/MeltedMAM.o
 
 deps: $(MLT_ARTIFACT) $(MELTED_ARTIFACT)
 
-clean-all: clean-mlt clean-melted clean
+clean-deps: clean-mlt clean-melted
 	rm -rf $(shell pwd)/build
 
 clean:
-	rm $(MELTED_MAM_OBJ) build/bin/melted-mam
+	rm tmp/* build/bin/melted-mam
 
 
 all: build/bin/melted-mam

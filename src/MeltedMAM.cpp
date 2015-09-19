@@ -46,6 +46,8 @@ Response* MeltedMAM::execute(char *command) {
 		preview.init();
 		//
 		Consumer consumer((mlt_consumer) (unit(0)->get_data("consumer")));
+		consumer.set("priority","max");
+		//
 		show_event = consumer.listen("consumer-frame-show", this, (mlt_listener) frame_show);
 		render_event = consumer.listen("consumer-frame-render", this, (mlt_listener) frame_render);
 		profile = new Profile(consumer.get_profile());
