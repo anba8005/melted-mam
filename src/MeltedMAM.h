@@ -33,16 +33,20 @@ public:
 private:
 	Event* show_event;
 	Event* render_event;
+	Event* property_event;
 	Profile* profile;
+	Consumer* consumer;
 
 	Preview preview;
 	AVFilter filter;
 
 	void frame_show_event(Frame &frame);
 	void frame_render_event(Frame &frame);
+	void property_changed_event(char *name);
 
 	static void frame_show(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr);
 	static void frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr);
+	static void property_changed(mlt_consumer, MeltedMAM *self, char* name);
 	static void filter_destructor(void *arg);
 };
 

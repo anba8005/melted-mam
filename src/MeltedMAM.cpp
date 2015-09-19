@@ -8,7 +8,8 @@
 #include "MeltedMAM.h"
 
 MeltedMAM::MeltedMAM(char *name, int port, char *preview_url) :
-		Melted(name, port, NULL), show_event(NULL), render_event(NULL), preview(preview_url), profile(NULL) {
+		Melted(name, port, NULL), show_event(NULL), render_event(NULL), preview(preview_url), profile(NULL), consumer(
+		NULL), property_event(NULL) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -18,6 +19,10 @@ MeltedMAM::~MeltedMAM() {
 		delete show_event;
 	if (render_event != NULL)
 		delete render_event;
+	if (property_event != NULL)
+		delete property_event;
+	if (consumer != NULL)
+		delete consumer;
 }
 
 // Custom command execution
@@ -45,12 +50,14 @@ Response* MeltedMAM::execute(char *command) {
 		//
 		preview.init();
 		//
-		Consumer consumer((mlt_consumer) (unit(0)->get_data("consumer")));
-		consumer.set("priority","max");
+		consumer = new Consumer((mlt_consumer) (unit(0)->get_data("consumer")));
+		consumer->set("priority", "max");
+		consumer->set("buffer", 25);
 		//
-		show_event = consumer.listen("consumer-frame-show", this, (mlt_listener) frame_show);
-		render_event = consumer.listen("consumer-frame-render", this, (mlt_listener) frame_render);
-		profile = new Profile(consumer.get_profile());
+		show_event = consumer->listen("consumer-frame-show", this, (mlt_listener) frame_show);
+		render_event = consumer->listen("consumer-frame-render", this, (mlt_listener) frame_render);
+		property_event = consumer->listen("property-changed", this, (mlt_listener) property_changed);
+		profile = new Profile(consumer->get_profile());
 		//
 		Playlist playlist((mlt_playlist) (unit(0)->get_data("playlist")));
 		playlist.set("eof", "loop");
@@ -61,6 +68,7 @@ Response* MeltedMAM::execute(char *command) {
 
 // Callback for frame show - after filters
 void MeltedMAM::frame_show_event(Frame &frame) {
+	//
 	preview.render(frame);
 }
 
@@ -75,12 +83,24 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 	const char* width = frame.get("width");
 	const char* height = frame.get("height");
 	if (!strcmp("720", width) && !strcmp("608", height))
-		frame.set("crop.top",32);
+		frame.set("crop.top", 32);
+	//
+	if (consumer->get_int("refresh") == 1) {
+		consumer->purge();
+		consumer->set("refresh", 0);
+	}
 }
 
 void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr) {
 	Frame frame(frame_ptr);
 	self->frame_render_event(frame);
+}
+
+void MeltedMAM::property_changed_event(char *name) {
+}
+
+void MeltedMAM::property_changed(mlt_consumer, MeltedMAM *self, char* name) {
+	self->property_changed_event(name);
 }
 
 void MeltedMAM::filter_destructor(void *arg) {

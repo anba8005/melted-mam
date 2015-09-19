@@ -11,6 +11,8 @@ $(MELTED_ARTIFACT):
 clean-melted:
 	cd $(MELTED_SRC_DIR) ; make clean
 
+melted:
+	cd $(MELTED_SRC_DIR) ; make -j8 && make install
 
 
 
