@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
 	stringstream port;
 	port << "5250" << (id < 0 ? 0 : id);
 	MeltedMAM server("melted-mam", atoi(port.str().c_str()), url);
-	server.execute("SET root=");
+
 	//
 	stringstream unit;
 	if (id < 0) {
@@ -51,7 +51,9 @@ int main(int argc, char** argv) {
 		unit << "UADD decklink:" << id;
 	}
 	server.start();
+	server.execute("SET root=");
 	server.execute((char*) unit.str().c_str());
+
 
 //	server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
 //	server.execute("apnd U0 /mnt/nfs/archive/bbbb-imx.mxf");
