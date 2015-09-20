@@ -3,6 +3,7 @@
 #include <cstring>
 #include <sstream>
 #include <stdlib.h>
+#include <unistd.h>
 using namespace std;
 
 #include <Mlt.h>
@@ -41,6 +42,7 @@ int main(int argc, char** argv) {
 	stringstream port;
 	port << "5250" << (id < 0 ? 0 : id);
 	MeltedMAM server("melted-mam", atoi(port.str().c_str()), url);
+	server.execute("SET root=");
 	//
 	stringstream unit;
 	if (id < 0) {
@@ -51,10 +53,24 @@ int main(int argc, char** argv) {
 	server.start();
 	server.execute((char*) unit.str().c_str());
 
-	//server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
+//	server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
 //	server.execute("apnd U0 /mnt/nfs/archive/bbbb-imx.mxf");
-//	server.execute("LOAD U0 /mnt/nfs/a.MP4");
+	//server.execute("LOAD U0 /mnt/nfs/archive/futbol.mov");
 	//server.execute("PLAY U0");
+	//sleep(5);
+	//server.execute("PAUSE U0");
+
+//	server.execute("LOAD U0 frei0r.plasma:1");
+	//server.execute("PLAY U0");
+
+
+	server.execute("load U0 /mnt/nfs/incoming/415_4421_01.AVI 50 100");
+	server.execute("apnd U0 frei0r.test_pat_B:2 0 100");
+	server.execute("apnd U0 /mnt/nfs/incoming/415_3592_01.MP4 60 110");
+	server.execute("apnd U0 frei0r.test_pat_B:2 0 100");
+	server.execute("apnd U0 /mnt/nfs/incoming/415_4421_01.AVI 50 100");
+	server.execute("apnd U0 /mnt/nfs/incoming/415_3592_01.MP4 60 110");
+	server.execute("play U0");
 
 	server.wait_for_shutdown();
 	return 0;

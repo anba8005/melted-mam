@@ -17,7 +17,7 @@ clean:
 	rm tmp/* build/bin/melted-mam
 
 
-all: build/bin/melted-mam
+all: deps build/bin/melted-mam
 
 tmp/%.o: src/%.cpp
 	g++ -c $(CFLAGS) $(MELTED_MAM_INCLUDE) -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o $@ $<
