@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 	}
 	//
 	stringstream port;
-	port << "5250" << (id < 0 ? 0 : id);
+	port << "5250" << (id < 0 ? 9 : id);
 	MeltedMAM server("melted-mam", atoi(port.str().c_str()), url);
 
 	//
