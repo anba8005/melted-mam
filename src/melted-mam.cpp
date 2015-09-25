@@ -55,8 +55,8 @@ int main(int argc, char** argv) {
 	server.execute((char*) unit.str().c_str());
 
 
-//	server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
-//	server.execute("apnd U0 /mnt/nfs/archive/bbbb-imx.mxf");
+	//server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
+	//server.execute("apnd U0 /mnt/nfs/archive/bbbb-imx.mxf");
 	//server.execute("LOAD U0 /mnt/nfs/archive/futbol.mov");
 	//server.execute("PLAY U0");
 	//sleep(5);
@@ -66,13 +66,18 @@ int main(int argc, char** argv) {
 	//server.execute("PLAY U0");
 
 
-	server.execute("load U0 /mnt/nfs/incoming/415_4421_01.AVI 50 100");
+	//server.execute("load U0 /mnt/nfs/incoming/415_4421_01.AVI");
+	//server.execute("apnd U0 /mnt/nfs/incoming/415_4421_01.AVI");
+/*	server.execute("apnd u0 count 0 99");
 	server.execute("apnd U0 frei0r.test_pat_B:2 0 100");
 	server.execute("apnd U0 /mnt/nfs/incoming/415_3592_01.MP4 60 110");
 	server.execute("apnd U0 frei0r.test_pat_B:2 0 100");
 	server.execute("apnd U0 /mnt/nfs/incoming/415_4421_01.AVI 50 100");
 	server.execute("apnd U0 /mnt/nfs/incoming/415_3592_01.MP4 60 110");
-	server.execute("play U0");
+	server.execute("load U0 /tmp/test.xml");
+	server.execute("apnd u0 count 0 99"); */
+	//server.execute("play U0");
+
 
 	server.wait_for_shutdown();
 	return 0;

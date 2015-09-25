@@ -9,7 +9,7 @@
 
 MeltedMAM::MeltedMAM(char *name, int port, char *preview_url) :
 		Melted(name, port, NULL), show_event(NULL), render_event(NULL), preview(preview_url), profile(NULL), consumer(
-		NULL), property_event(NULL) {
+		NULL), property_event(NULL), playlist(NULL), last_playlist_speed(0) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -23,6 +23,8 @@ MeltedMAM::~MeltedMAM() {
 		delete property_event;
 	if (consumer != NULL)
 		delete consumer;
+	if (playlist != NULL)
+		delete playlist;
 }
 
 // Custom command execution
@@ -50,17 +52,19 @@ Response* MeltedMAM::execute(char *command) {
 		//
 		preview.init();
 		//
+		unit(0)->set("playing_position_fix",1);
+		unit(0)->set("sin_skip_goto",1);
+		unit(0)->set("sout_skip_goto",1);
 		consumer = new Consumer((mlt_consumer) (unit(0)->get_data("consumer")));
 		consumer->set("priority", "max");
-		consumer->set("buffer", 25);
+		consumer->set("buffer", 50);
+		//
+		playlist = new Playlist((mlt_playlist) (unit(0)->get_data("playlist")));
 		//
 		show_event = consumer->listen("consumer-frame-show", this, (mlt_listener) frame_show);
 		render_event = consumer->listen("consumer-frame-render", this, (mlt_listener) frame_render);
 		property_event = consumer->listen("property-changed", this, (mlt_listener) property_changed);
 		profile = new Profile(consumer->get_profile());
-		//
-		Playlist playlist((mlt_playlist) (unit(0)->get_data("playlist")));
-		playlist.set("eof", "loop");
 	}
 
 	return response;
@@ -85,10 +89,14 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 	if (!strcmp("720", width) && !strcmp("608", height))
 		frame.set("crop.top", 32);
 	//
+	double speed = playlist->get_speed();
 	if (consumer->get_int("refresh") == 1) {
 		consumer->purge();
 		consumer->set("refresh", 0);
+		if (last_playlist_speed != 0 && playlist->get_speed() == 0)
+			playlist->seek(consumer->position());
 	}
+	last_playlist_speed = speed;
 }
 
 void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr) {

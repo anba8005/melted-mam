@@ -21,7 +21,6 @@ using namespace std;
 using namespace Mlt;
 
 #include "Preview.h"
-#include "AVFilter.h"
 
 class MeltedMAM: public Melted {
 public:
@@ -36,9 +35,10 @@ private:
 	Event* property_event;
 	Profile* profile;
 	Consumer* consumer;
+	Playlist* playlist;
+	double last_playlist_speed;
 
 	Preview preview;
-	AVFilter filter;
 
 	void frame_show_event(Frame &frame);
 	void frame_render_event(Frame &frame);
