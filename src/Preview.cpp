@@ -32,6 +32,8 @@ void Preview::init() {
 		return;
 
 	Profile profile("quarter_pal_wide");
+	profile.set_width(640);
+	profile.set_height(360);
 	if (url == "console") {
 		// sdl
 		consumer = new PushConsumer(profile, "sdl");
