@@ -10,7 +10,7 @@ MELTED_MAM_OBJ = tmp/melted-mam.o tmp/Preview.o tmp/MeltedMAM.o
 
 deps: $(MLT_ARTIFACT) $(MELTED_ARTIFACT)
 
-clean-deps: clean-mlt clean-melted
+distclean: clean-mlt clean-melted clean
 	rm -rf $(shell pwd)/build
 
 clean:
