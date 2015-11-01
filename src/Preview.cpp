@@ -56,7 +56,6 @@ void Preview::init() {
 			// rtmp
 			consumer->set("qscale", 16);
 			consumer->set("f", "flv");
-			consumer->set("vcodec", "flv1");
 			consumer->set("acodec", "libfaac");
 			consumer->set("ac", 2);
 		}
