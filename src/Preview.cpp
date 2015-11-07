@@ -9,7 +9,7 @@
 #include <sstream>
 
 Preview::Preview(const char* url) :
-		consumer(NULL), deinterlacer(NULL), scaler(NULL) {
+		consumer(NULL), scaler(NULL) {
 	if (url != NULL)
 		this->url = string(url);
 }
@@ -17,8 +17,6 @@ Preview::Preview(const char* url) :
 Preview::~Preview() {
 	if (consumer != NULL)
 		delete consumer;
-	if (deinterlacer != NULL)
-		delete deinterlacer;
 	if (scaler != NULL)
 		delete scaler;
 }
@@ -28,7 +26,8 @@ bool Preview::is_available() {
 }
 
 void Preview::init() {
-	if (!is_available())
+	std::unique_lock<std::mutex> lock(m);
+	if (!is_available() || consumer != NULL)
 		return;
 
 	Profile profile("quarter_pal_wide");
@@ -52,7 +51,7 @@ void Preview::init() {
 			consumer->set("f", "mpeg1video");
 			consumer->set("vcodec", "mpeg1video");
 			consumer->set("an", 1);
-		} else {
+		} else if (url.find("rtmp://") != string::npos) {
 			// rtmp
 			consumer->set("qscale", 16);
 			consumer->set("f", "flv");
@@ -65,15 +64,41 @@ void Preview::init() {
 	consumer->set("target", url.c_str());
 	consumer->start();
 	//
-	deinterlacer = new Filter(profile, "deinterlace");
-	scaler = new Filter(profile,"swscale");
+	scaler = new Filter(profile, "avfilter");
+	scaler->set("low_quality",true);
+	//
+	t = std::thread([this] {Preview::worker();});
+}
+
+void Preview::purge() {
+	std::unique_lock<std::mutex> lock(m);
+	frames.clear();
 }
 
 void Preview::render(Frame &frame) {
+	std::unique_lock<std::mutex> lock(m);
 	if (consumer != NULL && !consumer->is_stopped()) {
-		deinterlacer->process(frame);
-		scaler->process(frame);
-		consumer->push(frame);
+		Frame* f = new Frame(mlt_frame_clone(frame.get_frame(), true));
+		frames.push_back(f);
+		c.notify_all();
+	}
+}
+
+void Preview::worker() {
+	while (true) {
+		std::unique_lock<std::mutex> lock(m);
+		if (!frames.empty()) {
+			Frame* frame = frames.front();
+			frames.pop_front();
+			lock.unlock();
+			scaler->process(*frame);
+			consumer->push(*frame);
+			frame->dec_ref();
+			delete frame;
+		} else {
+			c.wait(lock);
+			continue;
+		}
 	}
 }
 

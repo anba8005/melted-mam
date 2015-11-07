@@ -9,6 +9,11 @@
 #define SRC_PREVIEW_H_
 
 #include <string>
+#include <thread>
+#include <deque>
+#include <mutex>
+#include <condition_variable>
+#include <unistd.h>
 using namespace std;
 
 #include <Mlt.h>
@@ -21,12 +26,17 @@ public:
 
 	bool is_available();
 	void init();
+	void purge();
 	void render(Frame &frame);
+	void worker();
 private:
 	string url;
 	PushConsumer *consumer;
-	Filter *deinterlacer;
 	Filter *scaler;
+	thread t;
+	mutex m;
+	condition_variable c;
+	deque<Frame*> frames;
 };
 
 

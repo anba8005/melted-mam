@@ -52,10 +52,13 @@ int main(int argc, char** argv) {
 	}
 	server.start();
 	server.execute("SET root=");
-	server.execute((char*) unit.str().c_str());
+	server.execute((char*) unit.str().c_str())->error_code();
 
-
+	//server.execute("STOP U0");
+	//server.execute("CLEAN U0");
+	//server.execute("REMOVE U0");
 	//server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
+	//server.execute("LOAD U0 \"/mnt/nfs/dv/TEST EFIR.mxf\"");
 	//server.execute("apnd U0 /mnt/nfs/archive/bbbb-imx.mxf");
 	//server.execute("LOAD U0 /mnt/nfs/archive/futbol.mov");
 	//server.execute("PLAY U0");

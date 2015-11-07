@@ -13,6 +13,7 @@
 #include <cstring>
 #include <sstream>
 #include <stdlib.h>
+#include <mutex>
 using namespace std;
 
 #include <Mlt.h>
@@ -37,6 +38,7 @@ private:
 	Consumer* consumer;
 	Playlist* playlist;
 	double last_playlist_speed;
+	mutex m;
 
 	Preview preview;
 

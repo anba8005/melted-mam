@@ -48,6 +48,7 @@ Response* MeltedMAM::execute(char *command) {
 	}
 
 	// initialization
+	std::unique_lock<std::mutex> lock(m);
 	if (render_event == NULL && unit(0) != NULL) {
 		//
 		preview.init();
@@ -95,6 +96,7 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 		consumer->set("refresh", 0);
 		if (last_playlist_speed != 0 && playlist->get_speed() == 0)
 			playlist->seek(consumer->position());
+		preview.purge();
 	}
 	last_playlist_speed = speed;
 }
