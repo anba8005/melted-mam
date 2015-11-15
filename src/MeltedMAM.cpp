@@ -9,7 +9,7 @@
 
 MeltedMAM::MeltedMAM(char *name, int port, char *preview_url) :
 		Melted(name, port, NULL), show_event(NULL), render_event(NULL), preview(preview_url), profile(NULL), consumer(
-		NULL), property_event(NULL), playlist(NULL), last_playlist_speed(0) {
+		NULL), property_event(NULL), changed_event(NULL), playlist(NULL), last_playlist_speed(0), preload_index(-1) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -21,6 +21,8 @@ MeltedMAM::~MeltedMAM() {
 		delete render_event;
 	if (property_event != NULL)
 		delete property_event;
+	if (changed_event != NULL)
+		delete changed_event;
 	if (consumer != NULL)
 		delete consumer;
 	if (playlist != NULL)
@@ -53,9 +55,9 @@ Response* MeltedMAM::execute(char *command) {
 		//
 		preview.init();
 		//
-		unit(0)->set("playing_position_fix",1);
-		unit(0)->set("sin_skip_goto",1);
-		unit(0)->set("sout_skip_goto",1);
+		unit(0)->set("playing_position_fix", 1);
+		unit(0)->set("sin_skip_goto", 1);
+		unit(0)->set("sout_skip_goto", 1);
 		consumer = new Consumer((mlt_consumer) (unit(0)->get_data("consumer")));
 		consumer->set("priority", "max");
 		consumer->set("buffer", 50);
@@ -64,8 +66,13 @@ Response* MeltedMAM::execute(char *command) {
 		//
 		show_event = consumer->listen("consumer-frame-show", this, (mlt_listener) frame_show);
 		render_event = consumer->listen("consumer-frame-render", this, (mlt_listener) frame_render);
-		property_event = consumer->listen("property-changed", this, (mlt_listener) property_changed);
 		profile = new Profile(consumer->get_profile());
+		//
+		property_event = playlist->listen("property-changed", this, (mlt_listener) property_changed);
+		changed_event = playlist->listen("playlist-current-changed", this, (mlt_listener) playlist_current_changed);
+		//
+		preload_thread = std::thread([this] {MeltedMAM::preload_worker();});
+
 	}
 
 	return response;
@@ -73,7 +80,6 @@ Response* MeltedMAM::execute(char *command) {
 
 // Callback for frame show - after filters
 void MeltedMAM::frame_show_event(Frame &frame) {
-	//
 	preview.render(frame);
 }
 
@@ -106,11 +112,51 @@ void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr)
 	self->frame_render_event(frame);
 }
 
-void MeltedMAM::property_changed_event(char *name) {
+void MeltedMAM::property_changed(mlt_consumer, MeltedMAM *self, char* name) {
+	if (name && !strcmp("length", name))
+		self->preload_queue(self->playlist->current_clip());
 }
 
-void MeltedMAM::property_changed(mlt_consumer, MeltedMAM *self, char* name) {
-	self->property_changed_event(name);
+void MeltedMAM::playlist_current_changed(mlt_playlist, MeltedMAM *self, int index) {
+	self->preload_queue(index);
+}
+
+void MeltedMAM::preload_queue(int index) {
+	std::unique_lock<std::mutex> lock(preload_mutex);
+	preload_index = index;
+	preload_condition.notify_one();
+}
+
+void MeltedMAM::preload_worker() {
+	while (true) {
+		std::unique_lock<std::mutex> lock(preload_mutex);
+		if (preload_index > -1) {
+			//
+			int i = preload_index + 1;
+			preload_index = -1;
+			lock.unlock();
+			//
+			if (playlist->count() == i)
+				i = 0;
+			//
+			if (playlist->current_clip() == i)
+				continue;
+			//
+			Producer* producer = playlist->get_clip(i);
+			mlt_log_info( NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
+			if (producer->get_speed() == 0) {
+				Frame* frame = producer->get_frame();
+				frame->dec_ref();
+				delete frame;
+			}
+			//
+			lock.lock();
+			if (preload_index > -1)
+				continue;
+		}
+		//
+		preload_condition.wait(lock);
+	}
 }
 
 void MeltedMAM::filter_destructor(void *arg) {

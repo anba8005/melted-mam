@@ -14,6 +14,8 @@
 #include <sstream>
 #include <stdlib.h>
 #include <mutex>
+#include <condition_variable>
+
 using namespace std;
 
 #include <Mlt.h>
@@ -34,6 +36,7 @@ private:
 	Event* show_event;
 	Event* render_event;
 	Event* property_event;
+	Event* changed_event;
 	Profile* profile;
 	Consumer* consumer;
 	Playlist* playlist;
@@ -42,13 +45,21 @@ private:
 
 	Preview preview;
 
+	thread preload_thread;
+	mutex preload_mutex;
+	condition_variable preload_condition;
+	int preload_index;
+
 	void frame_show_event(Frame &frame);
 	void frame_render_event(Frame &frame);
-	void property_changed_event(char *name);
+
+	void preload_queue(int index);
+	void preload_worker();
 
 	static void frame_show(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr);
 	static void frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr);
 	static void property_changed(mlt_consumer, MeltedMAM *self, char* name);
+	static void playlist_current_changed(mlt_playlist, MeltedMAM *self, int index);
 	static void filter_destructor(void *arg);
 };
 
