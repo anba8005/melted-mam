@@ -143,12 +143,16 @@ void MeltedMAM::preload_worker() {
 				continue;
 			//
 			Producer* producer = playlist->get_clip(i);
-			mlt_log_info( NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
-			if (producer->get_speed() == 0) {
-				Frame* frame = producer->get_frame();
-				frame->dec_ref();
-				delete frame;
+			if (producer) {
+				if (producer->get_speed() == 0) {
+					mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
+					Frame* frame = producer->get_frame();
+					frame->dec_ref();
+					delete frame;
+				}
+				delete producer;
 			}
+
 			//
 			lock.lock();
 			if (preload_index > -1)
