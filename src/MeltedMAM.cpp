@@ -55,7 +55,7 @@ Response* MeltedMAM::execute(char *command) {
 		//
 		preview.init();
 		//
-		unit(0)->set("playing_position_fix", 1);
+		unit(0)->set("playing_position_fix", 50); // buffer size
 		unit(0)->set("sin_skip_goto", 1);
 		unit(0)->set("sout_skip_goto", 1);
 		consumer = new Consumer((mlt_consumer) (unit(0)->get_data("consumer")));
