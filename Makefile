@@ -5,7 +5,7 @@ include mk/melted.mk
 
 CFLAGS = -O2 -Wno-write-strings -std=c++11
 MELTED_MAM_INCLUDE = -Ibuild/include/mlt++ -Ibuild/include/mlt -Ibuild/include/mlt/melted++
-MELTED_MAM_LIB = -Wl,-rpath=/usr/local/mam/lib -L/usr/local/mam/lib -lmelted++ -lmelted -lmlt++ -lmlt -lmvcp
+MELTED_MAM_LIB = -Wl,-rpath=/usr/local/mam/lib -L/usr/local/mam/lib -lmelted++ -lmelted -lmlt++ -lmlt -lmvcp -lpthread
 MELTED_MAM_OBJ = tmp/melted-mam.o tmp/Preview.o tmp/MeltedMAM.o
 
 deps: $(MLT_ARTIFACT) $(MELTED_ARTIFACT)

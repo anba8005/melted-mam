@@ -13,8 +13,7 @@
 #include <cstring>
 #include <sstream>
 #include <stdlib.h>
-#include <mutex>
-#include <condition_variable>
+#include "blockingconcurrentqueue.h"
 
 using namespace std;
 
@@ -46,21 +45,17 @@ private:
 	Preview preview;
 
 	thread preload_thread;
-	mutex preload_mutex;
-	condition_variable preload_condition;
-	int preload_index;
+	moodycamel::BlockingConcurrentQueue<int> preload_queue;
 
 	void frame_show_event(Frame &frame);
 	void frame_render_event(Frame &frame);
 
-	void preload_queue(int index);
 	void preload_worker();
 
 	static void frame_show(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr);
 	static void frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr);
 	static void property_changed(mlt_consumer, MeltedMAM *self, char* name);
 	static void playlist_current_changed(mlt_playlist, MeltedMAM *self, int index);
-	static void filter_destructor(void *arg);
 };
 
 #endif /* SRC_MELTEDMAM_H_ */

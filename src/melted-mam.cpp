@@ -1,3 +1,5 @@
+#include <poll.h>
+#include <fcntl.h>
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -12,6 +14,13 @@ using namespace std;
 using namespace Mlt;
 
 #include "MeltedMAM.h"
+
+bool isCommandAvailable() {
+	pollfd fdinfo;
+	fdinfo.fd = fileno(stdin);
+	fdinfo.events = POLLIN;
+	return poll(&fdinfo, 1, 1) > 0;
+}
 
 int main(int argc, char** argv) {
 	//
@@ -50,39 +59,34 @@ int main(int argc, char** argv) {
 	} else {
 		unit << "UADD decklink:" << id;
 	}
-	server.start();
+	//
+	if (!server.start()) {
+		cerr << "Error starting server" << endl;
+		return EXIT_FAILURE;
+	}
 	server.execute("SET root=");
 	server.execute((char*) unit.str().c_str())->error_code();
-
-	//server.execute("STOP U0");
-	//server.execute("CLEAN U0");
-	//server.execute("REMOVE U0");
-	//server.execute("LOAD U0 /mnt/nfs/archive/bbbb-dv.mov");
-	//server.execute("LOAD U0 \"/mnt/nfs/dv/TEST EFIR.mxf\"");
-	//server.execute("apnd U0 /mnt/nfs/archive/bbbb-imx.mxf");
-	//server.execute("LOAD U0 /mnt/nfs/archive/futbol.mov");
-	//server.execute("PLAY U0");
-	//sleep(5);
-	//server.execute("PAUSE U0");
-
-//	server.execute("LOAD U0 frei0r.plasma:1");
-	//server.execute("PLAY U0");
-
-
-	//server.execute("load U0 /mnt/nfs/incoming/415_4421_01.AVI");
-	//server.execute("apnd U0 /mnt/nfs/incoming/415_4421_01.AVI");
-/*	server.execute("apnd u0 count 0 99");
-	server.execute("apnd U0 frei0r.test_pat_B:2 0 100");
-	server.execute("apnd U0 /mnt/nfs/incoming/415_3592_01.MP4 60 110");
-	server.execute("apnd U0 frei0r.test_pat_B:2 0 100");
-	server.execute("apnd U0 /mnt/nfs/incoming/415_4421_01.AVI 50 100");
-	server.execute("apnd U0 /mnt/nfs/incoming/415_3592_01.MP4 60 110");
-	server.execute("load U0 /tmp/test.xml");
-	server.execute("apnd u0 count 0 99"); */
-	//server.execute("play U0");
-
-
-	server.wait_for_shutdown();
-	return 0;
+	//
+	while (server.is_running()) {
+		if (isCommandAvailable()) {
+			// handle command
+			string command;
+			getline(cin, command);
+			//
+			if (!command.empty()) {
+				char* c = (char*) command.c_str();
+				Response* result = server.execute(c);
+				for (int i = 0; i < result->count(); i++) {
+					cout << result->get(i) << endl;
+				}
+				cout.flush();
+			}
+		} else {
+			// wait
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+	}
+	//
+	return EXIT_SUCCESS;
 }
 

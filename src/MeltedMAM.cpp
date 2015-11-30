@@ -9,7 +9,7 @@
 
 MeltedMAM::MeltedMAM(char *name, int port, char *preview_url) :
 		Melted(name, port, NULL), show_event(NULL), render_event(NULL), preview(preview_url), profile(NULL), consumer(
-		NULL), property_event(NULL), changed_event(NULL), playlist(NULL), last_playlist_speed(0), preload_index(-1) {
+		NULL), property_event(NULL), changed_event(NULL), playlist(NULL), last_playlist_speed(0) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -113,58 +113,39 @@ void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr)
 }
 
 void MeltedMAM::property_changed(mlt_consumer, MeltedMAM *self, char* name) {
-	if (name && !strcmp("length", name))
-		self->preload_queue(self->playlist->current_clip());
+	if (name && !strcmp("length", name)) {
+		self->preload_queue.enqueue(self->playlist->current_clip());
+	}
 }
 
 void MeltedMAM::playlist_current_changed(mlt_playlist, MeltedMAM *self, int index) {
-	self->preload_queue(index);
-}
-
-void MeltedMAM::preload_queue(int index) {
-	std::unique_lock<std::mutex> lock(preload_mutex);
-	preload_index = index;
-	preload_condition.notify_one();
+	self->preload_queue.enqueue(index);
 }
 
 void MeltedMAM::preload_worker() {
 	while (true) {
-		std::unique_lock<std::mutex> lock(preload_mutex);
-		if (preload_index > -1) {
-			//
-			int i = preload_index + 1;
-			preload_index = -1;
-			lock.unlock();
-			//
-			if (playlist->count() == i)
-				i = 0;
-			//
-			if (playlist->current_clip() == i)
-				continue;
-			//
-			Producer* producer = playlist->get_clip(i);
-			if (producer) {
-				if (producer->get_speed() == 0) {
-					mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
-					Frame* frame = producer->get_frame();
-					frame->dec_ref();
-					delete frame;
-				}
-				delete producer;
-			}
-
-			//
-			lock.lock();
-			if (preload_index > -1)
-				continue;
-		}
 		//
-		preload_condition.wait(lock);
+		int i;
+		preload_queue.wait_dequeue(i);
+		i++;
+		//
+		if (playlist->count() == i)
+			i = 0;
+		//
+		if (playlist->current_clip() == i)
+			continue;
+		//
+		Producer* producer = playlist->get_clip(i);
+		if (producer) {
+			if (producer->get_speed() == 0) {
+				mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
+				Frame* frame = producer->get_frame();
+				frame->dec_ref();
+				delete frame;
+			}
+			delete producer;
+		}
 	}
 }
 
-void MeltedMAM::filter_destructor(void *arg) {
-	Filter *filter = (Filter *) arg;
-	delete filter;
-}
 
