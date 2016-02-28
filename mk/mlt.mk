@@ -6,7 +6,7 @@ FFMPEG_DIR = $(realpath ../FFmpeg-build/build)
 
 MLT_CONFIG_OPTS = --enable-gpl --enable-linsys --prefix=$(MLT_INSTALL_DIR) \
 --avformat-static=$(FFMPEG_DIR) --without-kde --enable-frei0r \
---avformat-ldextra="-lstdc++ -ldl -lasound -lSDL $(FFMPEG_DIR)/lib/libfaac.a \
+--avformat-ldextra="-lstdc++ -ldl -lasound -lSDL $(FFMPEG_DIR)/lib/libfaac.a -lfreetype \
 $(FFMPEG_DIR)/lib/libx264.a $(FFMPEG_DIR)/lib/librtmp.a"
 
 CFLAGS += -I$(MLT_INSTALL_DIR)/include
