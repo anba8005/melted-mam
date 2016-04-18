@@ -108,7 +108,7 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 	// attach timecode
 	int timecode = consumer->position();
 	int fps = 25; // hardcoded :)
-	int hh = timecode / (3600 * fps);
+	int hh = (timecode / (3600 * fps)) % 24;
 	timecode %= 3600 * fps;
 	int mm = timecode / (60 * fps);
 	timecode %= 60 * fps;
@@ -117,7 +117,7 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 	//
 	char* tc = new char[11];
 	sprintf(tc,"%i:%i:%i:%i",hh,mm,ss,ff);
-	frame.set("meta.attr.vitc.markup",tc,sizeof(tc));
+	frame.set("meta.attr.vitc.markup",tc);
 }
 
 void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr) {
