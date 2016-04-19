@@ -106,7 +106,7 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 	}
 	last_playlist_speed = speed;
 	// attach timecode
-	int timecode = consumer->position();
+	int timecode = frame.get_position();
 	int fps = 25; // hardcoded :)
 	int hh = (timecode / (3600 * fps)) % 24;
 	timecode %= 3600 * fps;
