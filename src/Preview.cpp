@@ -78,8 +78,10 @@ void Preview::purge() {
 void Preview::render(Frame &frame) {
 	std::unique_lock<std::mutex> lock(m);
 	if (consumer != NULL && !consumer->is_stopped()) {
-		Frame* f = new Frame(mlt_frame_clone(frame.get_frame(), true));
-		frames.push_back(f);
+		if (frames.size() < 100) {
+			Frame* f = new Frame(mlt_frame_clone(frame.get_frame(), true));
+			frames.push_back(f);
+		}
 		c.notify_all();
 	}
 }
