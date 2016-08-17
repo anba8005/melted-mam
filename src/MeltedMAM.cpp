@@ -140,6 +140,20 @@ void MeltedMAM::preload_worker() {
 		//
 		int i;
 		preload_queue.wait_dequeue(i);
+		//
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		//
+		int cache;
+		if (preload_queue.try_dequeue(cache)) {
+			// drain queue
+			int cache2;
+			while (preload_queue.try_dequeue(cache2))
+				cache = cache2;
+			// re-add last
+			preload_queue.enqueue(cache);
+			continue;
+		}
+		//
 		i++;
 		//
 		if (playlist->count() == i)
