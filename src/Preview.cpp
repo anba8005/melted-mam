@@ -72,16 +72,33 @@ void Preview::init() {
 
 void Preview::purge() {
 	std::unique_lock<std::mutex> lock(m);
+	// flush queue
+	while (!frames.empty()) {
+		Frame* frame = frames.front();
+		frames.pop_front();
+		frame->dec_ref();
+		delete frame;
+	}
 	frames.clear();
 }
 
 void Preview::render(Frame &frame) {
 	std::unique_lock<std::mutex> lock(m);
 	if (consumer != NULL && !consumer->is_stopped()) {
-		if (frames.size() < 100) {
-			Frame* f = new Frame(mlt_frame_clone(frame.get_frame(), true));
-			frames.push_back(f);
+		// flush queue
+		if (frames.size() > 100) {
+			while (!frames.empty()) {
+				Frame* frame = frames.front();
+				frames.pop_front();
+				frame->dec_ref();
+				delete frame;
+			}
+			frames.clear();
+			mlt_log_info(NULL,"Flushing preview queue\n");
 		}
+		// enqueue
+		Frame* f = new Frame(mlt_frame_clone(frame.get_frame(), true));
+		frames.push_back(f);
 		c.notify_all();
 	}
 }
