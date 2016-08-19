@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/resource.h>
 using namespace std;
 
 #include <Mlt.h>
@@ -23,6 +24,10 @@ bool isCommandAvailable() {
 }
 
 int main(int argc, char** argv) {
+	// always dump core
+	struct rlimit core_limits;
+	core_limits.rlim_cur = core_limits.rlim_max = RLIM_INFINITY;
+	setrlimit(RLIMIT_CORE, &core_limits);
 	//
 	setenv("MLT_REPOSITORY", "/usr/local/mam/lib/mlt", true);
 	setenv("MLT_DATA", "/usr/local/mam/share/mlt", true);
