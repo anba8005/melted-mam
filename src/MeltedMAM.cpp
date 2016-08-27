@@ -127,23 +127,33 @@ void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr)
 
 void MeltedMAM::property_changed(mlt_consumer, MeltedMAM *self, char* name) {
 	if (name && !strcmp("length", name)) {
-		self->preload_queue.enqueue(self->playlist->current_clip());
+		self->preload_queue.enqueue(1);
 	}
 }
 
 void MeltedMAM::playlist_current_changed(mlt_playlist, MeltedMAM *self, int index) {
-	self->preload_queue.enqueue(index);
+	self->preload_queue.enqueue(1);
 }
 
 void MeltedMAM::preload_worker() {
+	Frame* frame = NULL;
 	while (true) {
+
 		//
-		int i;
-		preload_queue.wait_dequeue(i);
+		// wait for playlist settle
 		//
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-		//
+
+		// get clip index
 		int cache;
+		preload_queue.wait_dequeue(cache);
+
+		// wait
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+
+		// lock
+		playlist->lock();
+
+		// skip if there's more indexes, playlist is "in action"
 		if (preload_queue.try_dequeue(cache)) {
 			// drain queue
 			int cache2;
@@ -151,27 +161,48 @@ void MeltedMAM::preload_worker() {
 				cache = cache2;
 			// re-add last
 			preload_queue.enqueue(cache);
+			//
+			playlist->unlock();
 			continue;
 		}
+
 		//
-		i++;
+		// playlist is settled for 1 sec - load clip after current
 		//
+
+		// check
+		int i = playlist->current_clip() + 1;
 		if (playlist->count() == i)
 			i = 0;
-		//
-		if (playlist->current_clip() == i)
-			continue;
-		//
-		Producer* producer = playlist->get_clip(i);
-		if (producer) {
-			if (producer->get_speed() == 0) {
-				mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
-				Frame* frame = producer->get_frame();
-				frame->dec_ref();
-				delete frame;
-			}
-			delete producer;
+
+		// destroy old frame
+		if (frame) {
+			frame->dec_ref();
+			delete frame;
+			frame = NULL;
 		}
+
+		// get desired producer
+		Producer* producer = playlist->get_clip(i);
+		if (!producer) {
+			playlist->unlock();
+			continue;
+		} else {
+			producer->inc_ref();
+		}
+
+		// unlock
+		playlist->unlock();
+
+		// get frame (loads clip)
+		if (producer->get_speed() == 0) {
+			mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
+			frame = producer->get_frame();
+		}
+
+		// clean producer
+		producer->dec_ref();
+		delete producer;
 	}
 }
 
