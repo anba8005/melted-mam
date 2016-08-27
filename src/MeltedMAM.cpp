@@ -196,7 +196,7 @@ void MeltedMAM::preload_worker() {
 
 		// get frame (loads clip)
 		if (producer->get_speed() == 0) {
-			mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", playlist->current_clip(), i);
+			mlt_log_info(NULL, "PRELOADING == current %i preload %i\n", i - 1, i);
 			frame = producer->get_frame();
 		}
 
