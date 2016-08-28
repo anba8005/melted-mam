@@ -137,6 +137,7 @@ void MeltedMAM::playlist_current_changed(mlt_playlist, MeltedMAM *self, int inde
 
 void MeltedMAM::preload_worker() {
 	Frame* frame = NULL;
+	Producer* producer = NULL;
 	while (true) {
 
 		//
@@ -177,18 +178,21 @@ void MeltedMAM::preload_worker() {
 
 		// destroy old frame
 		if (frame) {
-			frame->dec_ref();
 			delete frame;
 			frame = NULL;
 		}
 
+		// destroy old producer
+		if (producer) {
+			delete producer;
+			producer = NULL;
+		}
+
 		// get desired producer
-		Producer* producer = playlist->get_clip(i);
+		producer = playlist->get_clip(i);
 		if (!producer) {
 			playlist->unlock();
 			continue;
-		} else {
-			producer->inc_ref();
 		}
 
 		// unlock
@@ -200,9 +204,6 @@ void MeltedMAM::preload_worker() {
 			frame = producer->get_frame();
 		}
 
-		// clean producer
-		producer->dec_ref();
-		delete producer;
 	}
 }
 
