@@ -9,7 +9,7 @@
 
 MeltedMAM::MeltedMAM(char *name, int port, char *preview_url) :
 		Melted(name, port, NULL), show_event(NULL), render_event(NULL), preview(preview_url), profile(NULL), consumer(
-		NULL), property_event(NULL), changed_event(NULL), playlist(NULL), last_playlist_speed(0) {
+		NULL), property_event(NULL), changed_event(NULL), playlist(NULL), last_playlist_speed(0), last_frame(NULL) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -27,6 +27,8 @@ MeltedMAM::~MeltedMAM() {
 		delete consumer;
 	if (playlist != NULL)
 		delete playlist;
+	if (last_frame != NULL)
+		delete last_frame;
 }
 
 // Custom command execution
@@ -89,12 +91,16 @@ void MeltedMAM::frame_show(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr) {
 }
 
 // Callback for frame render - before filters
-void MeltedMAM::frame_render_event(Frame &frame) {
+void MeltedMAM::frame_render_event(Frame *frame) {
+	// save current frame & destroy last (crash on lag bug)
+	if (last_frame != NULL)
+		delete last_frame;
+	last_frame = frame;
 	// IMX crop
-	const char* width = frame.get("width");
-	const char* height = frame.get("height");
+	const char* width = frame->get("width");
+	const char* height = frame->get("height");
 	if (!strcmp("720", width) && !strcmp("608", height))
-		frame.set("crop.top", 32);
+		frame->set("crop.top", 32);
 	//
 	double speed = playlist->get_speed();
 	if (consumer->get_int("refresh") == 1) {
@@ -105,7 +111,7 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 		preview.purge();
 	}
 	last_playlist_speed = speed;
-	// attach timecode - CRASHES melted-mam :)
+	// attach timecode
 /*	int timecode = frame.get_position();
 	int fps = 25; // hardcoded :)
 	int hh = (timecode / (3600 * fps)) % 24;
@@ -121,7 +127,7 @@ void MeltedMAM::frame_render_event(Frame &frame) {
 }
 
 void MeltedMAM::frame_render(mlt_consumer, MeltedMAM *self, mlt_frame frame_ptr) {
-	Frame frame(frame_ptr);
+	Frame* frame = new Frame(frame_ptr);
 	self->frame_render_event(frame);
 }
 

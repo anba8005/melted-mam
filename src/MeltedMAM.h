@@ -47,8 +47,10 @@ private:
 	thread preload_thread;
 	moodycamel::BlockingConcurrentQueue<int> preload_queue;
 
+	Frame* last_frame;
+
 	void frame_show_event(Frame &frame);
-	void frame_render_event(Frame &frame);
+	void frame_render_event(Frame *frame);
 
 	void preload_worker();
 
