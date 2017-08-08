@@ -149,7 +149,7 @@ void MeltedMAM::preload_worker() {
 		preload_queue.wait_dequeue(cache);
 
 		// wait
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::seconds(3));
 
 		// lock
 		playlist->lock();
@@ -168,13 +168,24 @@ void MeltedMAM::preload_worker() {
 		}
 
 		//
-		// playlist is settled for 1 sec - load clip after current
+		// playlist is settled for 3 sec - load clip after current
 		//
 
-		// check
+		// get next clip index
 		int i = playlist->current_clip() + 1;
 		if (playlist->count() == i)
 			i = 0;
+
+		// skip if current clip near end (5 sec)
+		int current = playlist->position();
+		int nextStart = playlist->clip_start(i);
+		if (current > nextStart - 125) {
+			mlt_log_info(NULL, "skip PRELOADING == current %i next %i == current position %i next position %i \n"
+					, i - 1, i, current, nextStart);
+			playlist->unlock();
+			continue;
+		}
+
 
 		// destroy old frame
 		if (frame) {
